@@ -1,6 +1,6 @@
 ## SQL---Netflix-Top-10
 
-![netflix_header]([netflix_header.png](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/netflix_header.png)
+![netflix_header](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/netflix_header.png)
 
 ### Preview Dataset: all_week_countries
 
