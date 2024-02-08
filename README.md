@@ -17,10 +17,10 @@ We've added some guiding questions for analyzing this exciting dataset! Feel fre
 ### Preview Dataset: netflix top 10
 
 ```
-SELECT * 
-FROM 'netflix_top10.csv'
+SELECT *
+FROM 'netflix_top10_country.csv'
 ORDER BY 
-	week ASC, weekly_hours_viewed DESC;
+	country_name ASC, cumulative_weeks_in_top_10 DESC;
 ```
 
 ![Fig01](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig01.png)
@@ -37,22 +37,156 @@ weekly_rank ASC;
 
 ![Fig02](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig02.png)
 
-### Most Popular Category
+## Shows with most cumulative weeks in top 10
 
 ```
-SELECT category, SUM(weekly_hours_viewed) as total_hour_viewed
-FROM public.all_weeks_global
+SELECT show_title, MAX(cumulative_weeks_in_top_10) as cumulative_weeks_in_top_10
+FROM 'netflix_top10_country.csv'
+GROUP BY show_title
+ORDER BY max_cumulative_weeks_in_top_10 DESC;
+```
+
+### Most Popular Category - Total hours viewed by category
+
+```
+SELECT category, SUM(weekly_hours_viewed) AS total_hours_views
+FROM 'netflix_top10.csv'
 GROUP BY category
-ORDER BY total_hour_viewed DESC;
+ORDER BY total_hours_views DESC;
 ```
 
-### Top 10 Most View Show Globally Across All Weeks
+![Fig03](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig03.png)
+
+## Top 10 shows globally
 
 ```
-SELECT show_title, category, SUM(weekly_hours_viewed) as total_hours_viewed
-FROM public.all_weeks_global
-GROUP BY show_title, category
-ORDER BY total_hours_viewed DESC
+SELECT 
+	show_title,
+	season_title,
+	SUM(weekly_hours_viewed) AS total_hours_views
+FROM 'netflix_top10.csv'
+GROUP BY show_title, season_title
+ORDER BY total_hours_views DESC;
+```
+
+![Fig04](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig04.png)
+
+## Top 10 most viewed films globally
+
+```
+SELECT 
+	show_title, 
+	MAX(cumulative_weeks_in_top_10) AS cumulative_weeks_in_top_10,
+	SUM(weekly_hours_viewed) AS total_hours_views
+FROM 'netflix_top10.csv'
+WHERE category LIKE '%Films%'
+GROUP BY show_title
+ORDER BY total_hours_views DESC;
+```
+
+![Fig05](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig05.png)
+
+## Top 10 most viewed TV shows globally
+
+```
+SELECT 
+	show_title,
+	MAX(cumulative_weeks_in_top_10) AS cumulative_weeks_in_top_10,
+	SUM(weekly_hours_viewed) AS total_hours_views
+FROM 'netflix_top10.csv'
+WHERE category LIKE '%TV%'
+GROUP BY show_title
+ORDER BY total_hours_views DESC;
+```
+
+![Fig06](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig06.png)
+
+## Top 10 total cumulative weeks in top 10
+
+```
+SELECT 
+	show_title, 
+	MAX(cumulative_weeks_in_top_10) as max_cumulative_weeks_in_top_10
+FROM 'netflix_top10.csv'
+GROUP BY show_title
+ORDER BY max_cumulative_weeks_in_top_10 DESC
 LIMIT 10;
 ```
 
+![Fig07](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig07.png)
+
+## Highest Rank shows in Thailand
+
+```
+WITH RankedFilms AS (
+  SELECT
+    country_iso2,
+    CASE
+        WHEN season_title = 'N/A' THEN show_title
+            ELSE season_title
+    END AS content_title,
+    MAX(cumulative_weeks_in_top_10) AS total_weeks_in_top_10,
+	MIN(weekly_rank) AS highest_rank,
+    ROW_NUMBER() OVER (PARTITION BY country_iso2 ORDER BY SUM(cumulative_weeks_in_top_10) DESC) as rank
+  FROM 'netflix_top10_country.csv'
+  WHERE country_iso2 = 'TH'
+  GROUP BY country_iso2, content_title
+)
+SELECT country_iso2, content_title, highest_rank, total_weeks_in_top_10
+FROM RankedFilms
+ORDER BY country_iso2 ASC, rank ASC
+LIMIT 
+	10;
+```
+
+![Fig08](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig08.png)
+
+## Top films in Thailand
+
+```
+WITH RankedFilms AS (
+  SELECT
+    country_iso2,
+    CASE
+        WHEN season_title = 'N/A' THEN show_title
+            ELSE season_title
+    END AS content_title,
+    MAX(cumulative_weeks_in_top_10) AS total_weeks_in_top_10,
+	MIN(weekly_rank) AS highest_rank,
+    ROW_NUMBER() OVER (PARTITION BY country_iso2 ORDER BY SUM(cumulative_weeks_in_top_10) DESC) as rank
+  FROM 'netflix_top10_country.csv'
+  WHERE category LIKE '%Films%' AND country_iso2 = 'TH' --select category and country--
+  GROUP BY country_iso2, content_title
+)
+SELECT country_iso2, content_title, highest_rank, total_weeks_in_top_10
+FROM RankedFilms
+WHERE rank <= 10
+ORDER BY country_iso2 ASC, rank ASC;
+```
+
+![Fig09](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig09.png)
+
+## Top TV shows in Thailand
+
+```
+WITH RankedFilms AS (
+  SELECT
+    country_iso2,
+    CASE
+        WHEN season_title = 'N/A' THEN show_title
+            ELSE season_title
+    END AS content_title,
+    MAX(cumulative_weeks_in_top_10) AS total_weeks_in_top_10,
+	MIN(weekly_rank) AS highest_rank,
+    ROW_NUMBER() OVER (PARTITION BY country_iso2 ORDER BY SUM(cumulative_weeks_in_top_10) DESC) as rank
+  FROM 'netflix_top10_country.csv'
+  WHERE category LIKE '%TV%' AND country_iso2 = 'TH' --select category and country--
+  GROUP BY country_iso2, content_title
+)
+SELECT country_iso2, content_title, highest_rank, total_weeks_in_top_10
+FROM RankedFilms
+WHERE rank <= 10
+ORDER BY country_iso2 ASC, rank ASC;
+```
+
+![Fig10](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig10.png)
