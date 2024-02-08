@@ -25,7 +25,7 @@ ORDER BY
 
 ![Fig01](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig01.png)
 
-## Preview Datasets: all_week_global
+## Preview Datasets: netflix top 10 country
 
 ```
 SELECT *
@@ -34,6 +34,8 @@ ORDER by week ASC,
 cumulative_weeks_in_top_10 ASC, 
 weekly_rank ASC;
 ```
+
+![Fig02](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig02.png)
 
 ### Most Popular Category
 
