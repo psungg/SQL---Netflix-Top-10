@@ -190,3 +190,281 @@ ORDER BY country_iso2 ASC, rank ASC;
 ```
 
 ![Fig10](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig10.png)
+
+## Top 10 Lists in a Single Weekly Top 10 List Spanning All Categories
+
+```
+SELECT week, show_title, SUM(weekly_hours_viewed) AS total_weekly_hours_viewed
+FROM 'netflix_top10.csv'
+GROUP BY week, show_title
+ORDER BY week DESC, total_weekly_hours_viewed DESC;
+```
+
+![Fig11](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig11.png)
+
+## Top 10 shows by month
+
+```
+WITH MonthlyAggregates AS (
+    SELECT
+        DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+        CASE
+        WHEN season_title = 'N/A' THEN show_title
+            ELSE season_title
+    END AS content_title,
+        SUM(weekly_hours_viewed) AS total_monthly_hours_viewed
+    FROM
+        'netflix_top10.csv'
+    GROUP BY
+        DATE_TRUNC('month', CAST(week AS DATE)),
+        content_title
+),
+RankedShows AS (
+    SELECT
+        month,
+        content_title,
+        total_monthly_hours_viewed,
+        RANK() OVER (PARTITION BY month ORDER BY total_monthly_hours_viewed DESC) AS rank
+    FROM
+        MonthlyAggregates
+)
+SELECT
+    month,
+    content_title,
+    total_monthly_hours_viewed
+FROM
+    RankedShows
+WHERE
+    rank <= 10 AND month LIKE '%%' -- Filter YY-MM
+ORDER BY
+    month DESC,
+    rank ASC;
+```
+
+![Fig12](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig12.png)
+
+## Category hours viewed by month
+
+```
+SELECT
+    DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+    category,
+    SUM(weekly_hours_viewed) AS total_monthly_hours_viewed
+FROM
+    'netflix_top10.csv'
+WHERE
+	month LIKE '%23-06-%' -- Filter YY-MM
+GROUP BY
+    DATE_TRUNC('month', CAST(week AS DATE)),
+    category
+ORDER BY
+    month DESC,
+    total_monthly_hours_viewed DESC;
+```
+
+![Fig13](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig13.png)
+
+### Top 10 Shows achieved Top 1 the most
+
+```
+WITH MonthlyAggregates AS (
+    SELECT
+        DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+        CASE
+            WHEN season_title = 'N/A' OR season_title IS NULL THEN show_title
+            ELSE season_title
+        END AS content_title,
+        SUM(weekly_hours_viewed) AS total_monthly_hours_viewed
+    FROM
+        'netflix_top10.csv'
+    GROUP BY
+        month,
+        content_title
+),
+RankedShows AS (
+    SELECT
+        month,
+        content_title,
+        total_monthly_hours_viewed,
+        RANK() OVER (PARTITION BY month ORDER BY total_monthly_hours_viewed DESC) AS rank
+    FROM
+        MonthlyAggregates
+),
+TopRankedShows AS (
+    SELECT
+        content_title,
+        COUNT(*) AS times_rank_1
+    FROM
+        RankedShows
+	WHERE
+    rank <= 1 AND month LIKE '%%' -- Filter YY-MM
+    GROUP BY
+        content_title
+)
+SELECT
+    content_title,
+    times_rank_1
+FROM
+    TopRankedShows
+ORDER BY
+    times_rank_1 DESC
+LIMIT 
+	10;
+```
+
+![Fig14](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig14.png)
+
+## Top 10 rank 1 shows in 2022
+
+```
+WITH MonthlyAggregates AS (
+    SELECT
+        DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+        CASE
+            WHEN season_title = 'N/A' OR season_title IS NULL THEN show_title
+            ELSE season_title
+        END AS content_title,
+        SUM(weekly_hours_viewed) AS total_monthly_hours_viewed
+    FROM
+        'netflix_top10.csv'
+    GROUP BY
+        month,
+        content_title
+),
+RankedShows AS (
+    SELECT
+        month,
+        content_title,
+        total_monthly_hours_viewed,
+        RANK() OVER (PARTITION BY month ORDER BY total_monthly_hours_viewed DESC) AS rank
+    FROM
+        MonthlyAggregates
+),
+TopRankedShows AS (
+    SELECT
+        content_title,
+        COUNT(*) AS times_rank_1
+    FROM
+        RankedShows
+	WHERE
+    rank <= 1 AND month LIKE '%22-%' -- Filter YY-MM
+    GROUP BY
+        content_title
+)
+SELECT
+    content_title,
+    times_rank_1
+FROM
+    TopRankedShows
+ORDER BY
+    times_rank_1 DESC
+LIMIT 
+	10;
+```
+
+![Fig15](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig15.png)
+
+## Top 10 rank 1 TV shows in 2022
+
+```
+WITH MonthlyAggregates AS (
+    SELECT
+        DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+        CASE
+            WHEN season_title = 'N/A' OR season_title IS NULL THEN show_title
+            ELSE season_title
+        END AS content_title,
+        SUM(weekly_hours_viewed) AS total_monthly_hours_viewed
+    FROM
+        'netflix_top10.csv'
+	WHERE
+		category LIKE '%TV%'
+    GROUP BY
+        month,
+        content_title
+),
+RankedShows AS (
+    SELECT
+        month,
+        content_title,
+        total_monthly_hours_viewed,
+        RANK() OVER (PARTITION BY month ORDER BY total_monthly_hours_viewed DESC) AS rank
+    FROM
+        MonthlyAggregates
+),
+TopRankedShows AS (
+    SELECT
+        content_title,
+        COUNT(*) AS times_rank_1
+    FROM
+        RankedShows
+	WHERE
+    rank <= 1 AND month LIKE '%%' -- Filter YY-MM
+    GROUP BY
+        content_title
+)
+SELECT
+    content_title,
+    times_rank_1
+FROM
+    TopRankedShows
+ORDER BY
+    times_rank_1 DESC
+LIMIT 
+	10;
+
+```
+
+![Fig16](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig16.png)
+
+## Top 10 Films in Thailand 2022
+
+```
+WITH MonthlyAggregates AS (
+    SELECT
+        DATE_TRUNC('month', CAST(week AS DATE)) AS month,
+        CASE
+            WHEN season_title = 'N/A' OR season_title IS NULL THEN show_title
+            ELSE season_title
+        END AS content_title,
+        MAX(cumulative_weeks_in_top_10) AS cumulative_weeks_in_top_10
+    FROM
+        'netflix_top10_country.csv'
+	WHERE
+		country_name = 'Thailand' AND category LIKE '%Films%'
+    GROUP BY
+        month,
+        content_title
+),
+RankedShows AS (
+    SELECT
+        month,
+        content_title,
+        cumulative_weeks_in_top_10,
+        RANK() OVER (PARTITION BY month ORDER BY cumulative_weeks_in_top_10 DESC) AS rank
+    FROM
+        MonthlyAggregates
+),
+TopRankedShows AS (
+    SELECT
+        content_title,
+        COUNT(*) AS times_rank_1
+    FROM
+        RankedShows
+	WHERE
+    rank <= 1 AND month LIKE '%22-%' -- Filter YY-MM
+    GROUP BY
+        content_title
+)
+SELECT
+    content_title,
+    times_rank_1
+FROM
+    TopRankedShows
+ORDER BY
+    times_rank_1 DESC
+LIMIT 
+	10;
+```
+
+![Fig17](https://github.com/psungg/SQL---Netflix-Top-10/blob/main/Images/Fig17.png)
